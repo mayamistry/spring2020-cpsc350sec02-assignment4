@@ -49,16 +49,7 @@ Simulate::Simulate(int numWindows, Registrar *r, int *text, int numElements) {
 void Simulate::simulate() {
   int stringIndex = 0; //keep track of index for string
 
-  int timeCheck = 0;
-
   while (m_continue) {
-
-    //ERROR CHECKING
-    cout << "Fault happens inside loop at time:" << timeCheck << endl;
-    ++timeCheck;
-    cout << "Main time: " << m_mainTime << endl;
-    cout << "File value: " << m_fileText[stringIndex] << endl;
-
     //CHECK #1: Are there any students at the windows? If so, iterate their times and also check if you can add another student to the window
     if (!m_registrar->isEmpty()) {
       for (int i = 0; i < m_numWindows; ++i) {
@@ -98,6 +89,7 @@ void Simulate::simulate() {
         }
       }
     }
+
     //CHECK #2: Are there are any students in the queue? If so, iterate all of their wait times for that specific student
     if (!m_queue->isEmpty()) {
       ListNode<Student> *curr = m_queue->getFront(); //get front of the queue (pointer)
@@ -120,10 +112,9 @@ void Simulate::simulate() {
           //add the node (or nodes) to the queue first before doing anything
           Student *s = new Student(m_fileText[stringIndex]);
           m_queue->insert(s);
-          if (stringIndex == m_numElements - 1) {
-            stringIndex = -1; //don't read in anymore info from text file since we've read everything
-          } else {
-            ++stringIndex; //otherwise if there's more info in the file then iterate
+          ++stringIndex;
+          if (stringIndex == m_numElements) {
+            stringIndex = -1;
           }
         }
 
@@ -141,7 +132,23 @@ void Simulate::simulate() {
         }
       }
     }
+    cout << "MAIN TIME: " << m_mainTime << endl;
+    //What's in the queue?
+    ListNode<Student> *curr = m_queue->getFront(); //get front of the queue (pointer)
+    Student *student = m_queue->peek(); //get front of the queue (Student)
+    while (curr != NULL) {
+      student = curr->data;
+      cout << "Student in queue: " << student->getWindowTime() << endl;
+      curr = curr->next;
+    }
 
+    //What's in the registrar?
+    for (int i = 0; i  < m_numWindows; ++i) {
+      Window *w = m_registrar->getCurrElement(i);
+      cout << "Window at registrar: " << w->getCurrTime() << endl;
+    }
+
+    cout << endl;
 
     //AFTER DOING EVERYTHING, then check if you should continue the simulation
     if (stringIndex == 0) {
