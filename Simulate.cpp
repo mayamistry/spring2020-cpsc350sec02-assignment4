@@ -3,99 +3,145 @@
 Simulate::Simulate() {
   m_numWindows = 0;
   m_queue = NULL;
-  m_fileText = "";
-  m_windowArray = NULL;
-  m_studentArray = NULL;
+  m_processed = NULL;
+  m_fileText = NULL;
+  m_numElements = 0;
   m_continue = true;
   m_mainTime = 0;
+  m_registrar = NULL; //array has the correct amount of memory blocks but all NULL
+
+
+  m_numStudents = 0; //number that students in the whole simulation
+  m_totalStudentWait = 0; //total minutes that all students wait in line
+  m_meanStudentWait = 0; //average wait time for students in line
+  m_medianStudentWait = 0; //median student wait time
+  m_maxStudentWait = 0; //max student wait time
+  m_numStudentsOver10 = 0; //# students that have to wait for more than 10 mins
+  m_totalIdleTime = 0; //total munutes that windows are idle (window[i] == -1)
+  m_meanIdleTime = 0; //average idle time for windows
+  m_maxIdleWait = 0; //max idle time for a window
+  m_numWindowsOver5 = 0; //# of windows that are idle for more than 5 mins
 }
 
-Simulate::Simulate(int numWindows, StudentQueue *q, string text, int *w, int *s) {
+Simulate::Simulate(int numWindows, Registrar *r, int *text, int numElements) {
   m_numWindows = numWindows;
-  m_queue = q;
+  m_queue = new StudentQueue<Student>();
+  m_processed = new StudentQueue<Student>();
   m_fileText = text;
-  m_windowArray = w;
-  m_studentArray = s;
+  m_numElements = numElements;
   m_continue = true;
   m_mainTime = 0;
+  m_registrar = r; //array has the correct amount of memory blocks but all NULL
+
+  m_numStudents = 0; //number that students in the whole simulation
+  m_totalStudentWait = 0; //total minutes that all students wait in line
+  m_meanStudentWait = 0; //average wait time for students in line
+  m_medianStudentWait = 0; //median student wait time
+  m_maxStudentWait = 0; //max student wait time
+  m_numStudentsOver10 = 0; //# students that have to wait for more than 10 mins
+  m_totalIdleTime = 0; //total munutes that windows are idle (window[i] == -1)
+  m_meanIdleTime = 0; //average idle time for windows
+  m_maxIdleWait = 0; //max idle time for a window
+  m_numWindowsOver5 = 0; //# of windows that are idle for more than 5 mins
 }
 
 
 void Simulate::simulate() {
   int stringIndex = 0; //keep track of index for string
-  while (m_continue) {
-    //if m_mainTime == 0, then initialize both of the arrays to 0 and -1
-    if (m_mainTime == 0) {
-      //initialize both of the arrays to -1 for windows and 0 for students
-      for (int i = 0; i < m_numWindows; ++i) {
-        m_windowArray[i] = -1;
-        m_studentArray[i] = 0;
-      }
-    }
 
-    //MAKE FUNCTIONS FOR ALL THE DIFFERENT CHECKS??
-    //check a huge number of conditions and things to do here
-    //1. First check if there are students at the windows and iterate their times
-    //also check if you can add students to the window
-    for (int i = 0; i < m_numWindows; ++i) {
-      if (m_numWindows != -1) {
-        //need to check for two things: does w[i] == s[i]?? if not then iterate otherwise reset values
-        if (m_numWindows[i] == m_studentArray[i]) {
-          //need to remove them from the window now and reset everything
-          if (!m_queue->isEmpty()) {
-            //is there someone at the queue? then add them straight to the window
-            m_numWindows[i] = 0;
-            //dequeue the front element from the line
-            int data = 0;//node's data (time needed at window)
-            m_studentArray[i] = data;
+  int timeCheck = 0;
+
+  while (m_continue) {
+
+    //ERROR CHECKING
+    cout << "Fault happens inside loop at time:" << timeCheck << endl;
+    ++timeCheck;
+    cout << "Main time: " << m_mainTime << endl;
+    cout << "File value: " << m_fileText[stringIndex] << endl;
+
+    //CHECK #1: Are there any students at the windows? If so, iterate their times and also check if you can add another student to the window
+    if (!m_registrar->isEmpty()) {
+      for (int i = 0; i < m_numWindows; ++i) {
+        Window *curr = m_registrar->getCurrElement(i);
+        Student *s = curr->getStudent();
+        //check if there is a student at this specific window
+        if (!curr->isWindowIdle()) {
+          //check if we need to remove the student if their times are equal
+          if (curr->getCurrTime() == s->getWindowTime()) {
+            //need to remove them from the window, but first check if student is in the queue
+            m_processed->insert(s); //put student removed from registrar into the processed queue to use for analysis purposes
+            ++m_numStudents;
+            //take out the old idle time and add to the statistics
+            int idleTime = curr->getIdleTime();
+            m_totalIdleTime += idleTime;
+            if (idleTime > m_maxIdleWait) {
+              m_maxIdleWait = idleTime; //set new maxIdleTime if it's larger than the current one
+            }
+            curr->setIdleTime(0);
+            if (!m_queue->isEmpty()) {
+              curr->setCurrTime(0); //reset the time for the window
+              Student *s1 = m_queue->remove(); //remove the student from the queue
+              m_registrar->addStudent(s1, i); //add student to this specific window
+            } else {
+              //there's no student in the queue, so make the window null
+              curr->setCurrTime(-1);
+              s = NULL;
+              curr->setStudent(s);
+            }
           } else {
-            //if no one is in the queue, then reset both arrays to 0 and -1
-            m_windowArray[i] = -1;
-            m_studentArray[i] = 0;
+            //the times are not equal for the window time and student time, so just increment the window time;
+            curr->incrementCurrTime();
           }
         } else {
-          m_numWindows[i] = m_numWindows[i] + 1; //how can I make this more efficient?
+          //increment the idles times for the windows since student is NULL
+          curr->incrementIdleTime();
         }
       }
     }
-    //2. if students are in the queue, then iterate their wait times as well
-    //iterate through the current queue and iterate whatever wait times they have
-    //???? not sure how to do this yet
+    //CHECK #2: Are there are any students in the queue? If so, iterate all of their wait times for that specific student
     if (!m_queue->isEmpty()) {
-      //figure out the wait time thing here
+      ListNode<Student> *curr = m_queue->getFront(); //get front of the queue (pointer)
+      Student *student = m_queue->peek(); //get front of the queue (Student)
+      while (curr != NULL) {
+        student = curr->data;
+        student->incrementWaitTime();
+        curr = curr->next;
+      }
     }
-    //otherwise do nothing since the queue is empty
 
-    //3. take first element from string
-    //does if the time represents that clock tick on the file name
-    if (m_mainTime == m_fileText[stringIndex]) {
-      //if it does, then add the new students to the simulation
-      //iterate stringIndex here but figure out where...
-      ++stringIndex;
-      int num = fileText[stringIndex]; //number of students being added at this clock tick
-      ++stringIndex;
-      for (int i = 0; i < num; ++i) {
-        //add the node (or nodes) to the queue first before doing anything
-        ListNode *curr = new ListNode(fileText[stringIndex]);
-        //INSERT NODE INTO THE QUEUE HERE
-        //INITIALIZE THEIR WAIT TIMES HERE!!!!
-        if (stringIndex == m_fileText.size() - 1) {
-          stringIndex = -1; //don't read in anymore info from text file since we've read everything
-        } else {
-          ++stringIndex; //otherwise if there's more info in the file then iterate
+    //CHECK #3: See if you can add any new students to the simulation based off of the string index of the text file
+    if (stringIndex != -1) {
+      if (m_mainTime == m_fileText[stringIndex]) {
+        //if it does, then add the new students to the simulation
+        ++stringIndex;
+        int num = m_fileText[stringIndex]; //number of students being added at this clock tick
+        ++stringIndex;
+        for (int i = 0; i < num; ++i) {
+          //add the node (or nodes) to the queue first before doing anything
+          Student *s = new Student(m_fileText[stringIndex]);
+          m_queue->insert(s);
+          if (stringIndex == m_numElements - 1) {
+            stringIndex = -1; //don't read in anymore info from text file since we've read everything
+          } else {
+            ++stringIndex; //otherwise if there's more info in the file then iterate
+          }
         }
-      }
-      //check if any of the windows are open first
-      for (int i = 0; i < m_numWindows; ++i) {
-        if (m_numWindows[i] == -1) {
-          m_numWindows[i] = 0;
-          //dequeue the front element from the line
-          //GET RID OF WAIT TIME THING but probably need to add to stats (don't if it equals 0)
-          int data = //node's data (time needed at window)
-          m_studentArray[i] = data;
+
+        //check if any of the windows are open first
+        for (int i = 0; i < m_numWindows; ++i) {
+          Window *w = m_registrar->getCurrElement(i);
+          if (!m_queue->isEmpty()) {
+            if (w->isWindowIdle()) {
+              w->setCurrTime(0);
+              Student *s1 = m_queue->remove(); //remove the student from the queue SEG FAULT HERE!!!!!!
+              m_registrar->addStudent(s1, i); //add student to this specific window
+              //don't to worry about wait time because it's already stored in the student object
+            }
+          }
         }
       }
     }
+
 
     //AFTER DOING EVERYTHING, then check if you should continue the simulation
     if (stringIndex == 0) {
@@ -108,27 +154,62 @@ void Simulate::simulate() {
   }
 }
 
+//NEED TO FIX THIS
 bool Simulate::continueSimulation() {
-  bool check = false;
-  //check if the queue is not empty and the arrays do not equal 0 or -1
-  if (!m_queue->isEmpty()) {
-    check = true;
-  }
-  for (int i = 0; i < numWindows; ++i) {
-    if (m_windowArray[i] != -1) {
-      check = true;
-      break;
-    }
+  bool check = true;
+  //check if the queue is empty and check if the registrar is empty
+  if ((m_queue->isEmpty()) && (m_registrar->isEmpty())){
+    check = false;
   }
   return check;
 }
 
-int* Simulate::allocateMoreMemory(int* curr, int currentSize) {
-  int newSize = currentSize * 2;
-  int* newArray = new int[newSize];
-  for (int i = 0; i < currentSize; ++i) {
-    newArray[i] = curr[i];
-  }
+void Simulate::calculateStats(){
+//   //SORTING A NEW Queue
+// int tempMin = 0;
+// int waitTimes = new int[m_numStudents];
+//
+//
+//
+// //mean student wait time
+// int total = 0;
+// int index = 0;
+// ListNode<Student> *curr = m_queue->getFront(); //get front of the queue (pointer)
+//   Student *student = m_queue->peek(); //get front of the queue (Student)
+//     while (curr != NULL) {
+//       int currTime = student->getWaitTime();
+//       total += currTime;
+//       if (currTime > maxStudentWait){
+//         maxStudentWait = currTime;
+//       }
+//       if (currTime > 10){
+//         ++numStudentsOver10;
+//       }
+//       curr = curr->next;
+//       student = curr->data;
+//     }
+// }
+// int studentMean = (total)/(m_numStudents);
+// cout << "The mean student wait time is: " << studentMean << endl;
+//
+//
+// //median student wait time
+//
+// //longest student wait time
+// cout << longest student wait time << endl;
+//
+// //number of students waiting over 10 minutes
+//   cout << "Number of students waiting over 10 minutes: " << numStudentsOver10 << endl;
+//
+//
+//
+//
+// //mean window idle time
+// int WindowMean = (.. + .. +.. )/numWindows
+//
+// //longest w 
+}
 
-  return newArray;
+void Simulate::printStats() {
+
 }

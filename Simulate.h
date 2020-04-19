@@ -1,34 +1,33 @@
 #include "StudentQueue.h"
+#include "Registrar.h"
+
+//DOES THIS NEED TO BE A TEMPLATE??????
+
 
 class Simulate {
   public:
     Simulate();
-    Simulate(int numWindows, StudentQueue *q, string text, int *w, int *s);
+    Simulate(int numWindows, Registrar *r, int *text, int numElements);
     void simulate();
 
     //helper methods
     bool continueSimulation();
+    void calculateStats();
     void printStats();
-
-    int* allocateMoreMemory(int *curr);
 
   private:
     //variables for simulation
     int m_numWindows;
-    StudentQueue *m_queue;
-    string m_fileText;
-    int *m_windowArray;
-    int *m_studentArray;
+    StudentQueue<Student> *m_queue;
+    StudentQueue<Student> *m_processed;
+    int *m_fileText; //array holding the file text
+    int m_numElements; //number of elements in the array
     bool m_continue;
+    Registrar *m_registrar;
 
     int m_mainTime; //represents the clock tick that we're at
 
     //variables for stats
-    //should we create arrays?? try and see if this works
-    int *waitTimes; //student wait times in the queue
-    int *idleTimes; //idle wait times for the windows
-    int *arraySize;
-
     int m_numStudents; //number that students in the whole simulation
     int m_totalStudentWait; //total minutes that all students wait in line
     float m_meanStudentWait; //average wait time for students in line

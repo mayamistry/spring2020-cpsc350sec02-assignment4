@@ -31,39 +31,50 @@ void FileIO::readInFile() {
 
   //What do I need to do here?
   //1. Create the StudentQueue pointer instance
-  //2. Create the two arrays, one for windows and students and create
+  //2. Create the registrar object based off of number of windows in text file
   //using the # of numbers from the top of the file (need to create track out
   //which line we are at on the file) lineCount == 1;
 
-  StudentQueue* queue = new StudentQueue();
   int lineCount = 0;
   string currentLine = "";
-  string fileText = "";
+  int arraySize = 1000;
+  int* fileText = new int[arraySize];
+  int numWindows = 0;
+  int tempCount = 0; //keep track of this for the array in case you need to allocate more memory
 
-  //use these two arrays to keep track and windows and students after being removed from the queue
-  int *windowArray;
-  int *studentArray;
 
   while (!inFS.eof()) {
-    inFS >> currentLine;
+    getline(inFS, currentLine);
     if (!inFS.fail()) {
       ++lineCount;
       if (lineCount == 1) {
-        int numWindows = stoi(currentLine);
-        windowArray = new int[numWindows];
-        studentArray = new int[numWindows];
+        numWindows = stoi(currentLine);
       } else {
-        fileText += currentLine;
+        if (tempCount == (arraySize - 1)) {
+          fileText = allocateMoreMemory(fileText, arraySize);
+        }
+        fileText[tempCount] = stoi(currentLine);
+        ++tempCount;
       }
     }
   }
 
-
   inFS.close();
 
-  //create an instance of simulate here
-  //pass through the numWindows, two arrays, the queue, the string and other info??
+  //create an instance of simulate and the registrar to pass into it
+  //pass through the numWindows, window array, the queue, the string and other info??
+  Registrar *r = new Registrar(numWindows);
+  Simulate *s = new Simulate(numWindows, r, fileText, tempCount);
 
+  s->simulate();
+}
 
+int* FileIO::allocateMoreMemory(int* curr, int currentSize) {
+  int newSize = currentSize * 2;
+  int* newArray = new int[newSize];
+  for (int i = 0; i < currentSize; ++i) {
+    newArray[i] = curr[i];
+  }
 
+  return newArray;
 }

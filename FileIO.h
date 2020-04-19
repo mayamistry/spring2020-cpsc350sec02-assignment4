@@ -10,7 +10,8 @@ class FileIO {
     string getFileName();
     void readInFile();
 
-    //add extra helper methods here
+    //helper method
+    int* allocateMoreMemory(int* curr, int currentSize);
 
   private:
     string m_fileName;
