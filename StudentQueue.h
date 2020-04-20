@@ -19,7 +19,6 @@ class StudentQueue : public List<T> {
     bool isEmpty(); //is the queue empty?
     int getSize(); //returns the number of items in a queue
 
-  private:
     int m_size; //don't need numElements since DLL is dynmaic in size
     ListNode<T> *front;
     ListNode<T> *rear;

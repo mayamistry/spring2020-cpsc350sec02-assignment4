@@ -52,5 +52,5 @@ void Window::addStudent(Student *s) {
 
 //check if window is idle
 bool Window::isWindowIdle() {
-  return (m_student == NULL);
+  return (m_currTime == -1);
 }

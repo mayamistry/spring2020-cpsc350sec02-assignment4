@@ -63,8 +63,9 @@ void Simulate::simulate() {
           //check if we need to remove the student if their times are equal
           if (curr->getCurrTime() == s->getWindowTime()) {
             //need to remove them from the window, but first check if student is in the queue
-            m_processed->insertBack(s); //put student removed from registrar into the processed queue to use for analysis purposes
-            ++m_numStudents;
+            m_processed->insertBack(s); //put student removed from registrar into the processed DLL to use for analysis purposes
+            cout << "WINDOW TIME: " << s->getWindowTime() << endl;
+            cout << "BACK OF M_PROCESSED QUEUE: " << m_processed->back->data->getWindowTime() << endl;
             //take out the old idle time and add to the statistics
             int idleTime = curr->getIdleTime();
             m_totalIdleTime += idleTime;
@@ -94,6 +95,13 @@ void Simulate::simulate() {
           curr->incrementIdleTime();
         }
       }
+    } else if (m_mainTime != 0) {
+      for (int i = 0; i < m_numWindows; ++i) {
+        Window *w = m_registrar->getCurrElement(i);
+        if (w->isWindowIdle()) {
+          w->incrementIdleTime();
+        }
+      }
     }
 
 
@@ -117,13 +125,22 @@ void Simulate::simulate() {
         ++stringIndex;
         for (int i = 0; i < num; ++i) {
           //add the node (or nodes) to the queue first before doing anything
-          Student *s = new Student(m_fileText[stringIndex]);
+          Student *s = new Student(m_fileText[stringIndex++]);
+          ++m_numStudents;
           m_queue->insert(s);
-          ++stringIndex;
           if (stringIndex == m_numElements) {
             stringIndex = -1;
           }
         }
+
+        //IS THIS ERROR HERE????
+        // ListNode<Student> *curr = m_queue->front; //get front of the queue (pointer)
+        // while (curr != NULL) {
+        //   Student *student = curr->data;
+        //   cout << "Student in queue BEFORE: " << student->getWindowTime() << endl;
+        //   curr = curr->next;
+        // }
+
 
         //check if any of the windows are open first
         for (int i = 0; i < m_numWindows; ++i) {
@@ -140,19 +157,23 @@ void Simulate::simulate() {
       }
     }
     cout << "MAIN TIME: " << m_mainTime << endl;
+    cout << "STUDENT QUEUE SIZE: " << m_queue->getSize() << endl;
     //What's in the queue?
-    ListNode<Student> *curr = m_queue->getFront(); //get front of the queue (pointer)
+    ListNode<Student> *curr = m_queue->front; //get front of the queue (pointer)
     Student *student = m_queue->peek(); //get front of the queue (Student)
     while (curr != NULL) {
       student = curr->data;
       cout << "Student in queue: " << student->getWindowTime() << endl;
+      cout << "Student wait time: " << student->getWaitTime() << endl;
       curr = curr->next;
     }
+
 
     //What's in the registrar?
     for (int i = 0; i  < m_numWindows; ++i) {
       Window *w = m_registrar->getCurrElement(i);
       cout << "Window at registrar: " << w->getCurrTime() << endl;
+      cout << "Window idle time: " << w->getIdleTime() << endl;
     }
 
     cout << endl;
@@ -163,6 +184,22 @@ void Simulate::simulate() {
       m_continue = true;
     } else {
       m_continue = continueSimulation();
+      if (m_continue == false) {
+        //take all wait times and idle times from windows and place into stats variables
+        for (int i  = 0; i < m_numWindows; ++i) {
+          Window *w = m_registrar->getCurrElement(i);
+          if (w->isWindowIdle()) {
+            int idleTime = w->getIdleTime();
+            m_totalIdleTime += idleTime;
+            if (idleTime > m_maxIdleWait) {
+              m_maxIdleWait = idleTime; //set new maxIdleTime if it's larger than the current one
+            }
+            if (idleTime > 5) {
+              ++m_numWindowsOver5;
+            }
+          }
+        }
+      }
     }
     ++m_mainTime;
   }
@@ -179,8 +216,19 @@ bool Simulate::continueSimulation() {
 }
 
 void Simulate::calculateStats(){
-//DO WE NEED TO DELETE THE STUDENT OBJECTS AT SOME POINT?
-//  SORTING A NEW Queue
+  //DO WE NEED TO DELETE THE STUDENT OBJECTS AT SOME POINT?
+  //SORTING A NEW Queue
+
+  cout << "NUM STUDENTS: " << m_numStudents <<  endl;
+
+  ListNode<Student> *curr = m_processed->front;
+  while (curr != NULL) {
+    Student *s = curr->data;
+    cout << s->getWindowTime() << endl;
+    curr = curr->next;
+  }
+
+
 
   int* waitTimes = new int[m_numStudents];
   int index = 0;
@@ -207,8 +255,6 @@ void Simulate::calculateStats(){
     m_processed->remove(minStudent);
   }
 
-
-
   m_meanStudentWait = (float)(m_totalStudentWait / m_numStudents);
   m_maxStudentWait = waitTimes[m_numStudents - 1];
 
@@ -234,6 +280,6 @@ void Simulate::printStats() {
   cout << "Longest student wait time: " << m_maxStudentWait << endl;
   cout << "# of students waiting for more than 10 mins: " << m_numStudentsOver10 << endl;
   cout << "Mean window idle time: " << m_meanIdleTime << endl;
-  cout << "Longest windoe idle time: " << m_maxIdleWait << endl;
+  cout << "Longest window idle time: " << m_maxIdleWait << endl;
   cout << "# of windows idle for more than 5 mins: " << m_numWindowsOver5 << endl;
 }

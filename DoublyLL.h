@@ -88,7 +88,6 @@ void DoublyLL<T>::insertFront(T* d){
 template <class T>
 void DoublyLL<T>::insertBack(T* d){
   ListNode<T> *node = new ListNode<T>(d);
-
   if(isEmpty()){
     front = node;
     back = node;
