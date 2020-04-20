@@ -2,11 +2,11 @@
 
 template <class T>
 class DoublyLL{
-  private:
-      ListNode<T> *front;
-      ListNode<T> *back;
-      unsigned int size; //no such thing as negative size
   public:
+    ListNode<T> *front;
+    ListNode<T> *back;
+    unsigned int size; //no such thing as negative size
+
     DoublyLL();
     ~DoublyLL();
 

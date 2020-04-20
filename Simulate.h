@@ -8,6 +8,7 @@ class Simulate {
   public:
     Simulate();
     Simulate(int numWindows, Registrar *r, int *text, int numElements);
+    ~Simulate();
     void simulate();
 
     //helper methods
@@ -19,7 +20,7 @@ class Simulate {
     //variables for simulation
     int m_numWindows;
     StudentQueue<Student> *m_queue;
-    StudentQueue<Student> *m_processed;
+    DoublyLL<Student> *m_processed;
     int *m_fileText; //array holding the file text
     int m_numElements; //number of elements in the array
     bool m_continue;

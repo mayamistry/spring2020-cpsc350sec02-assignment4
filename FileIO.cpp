@@ -67,6 +67,8 @@ void FileIO::readInFile() {
   Simulate *s = new Simulate(numWindows, r, fileText, tempCount);
 
   s->simulate();
+  s->calculateStats();
+  s->printStats();
 }
 
 int* FileIO::allocateMoreMemory(int* curr, int currentSize) {

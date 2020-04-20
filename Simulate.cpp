@@ -26,7 +26,7 @@ Simulate::Simulate() {
 Simulate::Simulate(int numWindows, Registrar *r, int *text, int numElements) {
   m_numWindows = numWindows;
   m_queue = new StudentQueue<Student>();
-  m_processed = new StudentQueue<Student>();
+  m_processed = new DoublyLL<Student>();
   m_fileText = text;
   m_numElements = numElements;
   m_continue = true;
@@ -45,6 +45,9 @@ Simulate::Simulate(int numWindows, Registrar *r, int *text, int numElements) {
   m_numWindowsOver5 = 0; //# of windows that are idle for more than 5 mins
 }
 
+Simulate::~Simulate() {
+  //DELETE ALL OF THE POINTERS THAT WE USE IN THIS FILE !!!!!!!!!!!!!!!!!
+}
 
 void Simulate::simulate() {
   int stringIndex = 0; //keep track of index for string
@@ -60,13 +63,16 @@ void Simulate::simulate() {
           //check if we need to remove the student if their times are equal
           if (curr->getCurrTime() == s->getWindowTime()) {
             //need to remove them from the window, but first check if student is in the queue
-            m_processed->insert(s); //put student removed from registrar into the processed queue to use for analysis purposes
+            m_processed->insertBack(s); //put student removed from registrar into the processed queue to use for analysis purposes
             ++m_numStudents;
             //take out the old idle time and add to the statistics
             int idleTime = curr->getIdleTime();
             m_totalIdleTime += idleTime;
             if (idleTime > m_maxIdleWait) {
               m_maxIdleWait = idleTime; //set new maxIdleTime if it's larger than the current one
+            }
+            if (idleTime > 5) {
+              ++m_numWindowsOver5;
             }
             curr->setIdleTime(0);
             if (!m_queue->isEmpty()) {
@@ -89,6 +95,7 @@ void Simulate::simulate() {
         }
       }
     }
+
 
     //CHECK #2: Are there are any students in the queue? If so, iterate all of their wait times for that specific student
     if (!m_queue->isEmpty()) {
@@ -124,7 +131,7 @@ void Simulate::simulate() {
           if (!m_queue->isEmpty()) {
             if (w->isWindowIdle()) {
               w->setCurrTime(0);
-              Student *s1 = m_queue->remove(); //remove the student from the queue SEG FAULT HERE!!!!!!
+              Student *s1 = m_queue->remove();
               m_registrar->addStudent(s1, i); //add student to this specific window
               //don't to worry about wait time because it's already stored in the student object
             }
@@ -172,51 +179,61 @@ bool Simulate::continueSimulation() {
 }
 
 void Simulate::calculateStats(){
-//   //SORTING A NEW Queue
-// int tempMin = 0;
-// int waitTimes = new int[m_numStudents];
-//
-//
-//
-// //mean student wait time
-// int total = 0;
-// int index = 0;
-// ListNode<Student> *curr = m_queue->getFront(); //get front of the queue (pointer)
-//   Student *student = m_queue->peek(); //get front of the queue (Student)
-//     while (curr != NULL) {
-//       int currTime = student->getWaitTime();
-//       total += currTime;
-//       if (currTime > maxStudentWait){
-//         maxStudentWait = currTime;
-//       }
-//       if (currTime > 10){
-//         ++numStudentsOver10;
-//       }
-//       curr = curr->next;
-//       student = curr->data;
-//     }
-// }
-// int studentMean = (total)/(m_numStudents);
-// cout << "The mean student wait time is: " << studentMean << endl;
-//
-//
-// //median student wait time
-//
-// //longest student wait time
-// cout << longest student wait time << endl;
-//
-// //number of students waiting over 10 minutes
-//   cout << "Number of students waiting over 10 minutes: " << numStudentsOver10 << endl;
-//
-//
-//
-//
-// //mean window idle time
-// int WindowMean = (.. + .. +.. )/numWindows
-//
-// //longest w 
+//DO WE NEED TO DELETE THE STUDENT OBJECTS AT SOME POINT?
+//  SORTING A NEW Queue
+
+  int* waitTimes = new int[m_numStudents];
+  int index = 0;
+  while (!m_processed->isEmpty()) {
+    ListNode<Student> *curr = m_processed->front;
+    Student *minStudent = curr->data;
+    int tempMin = minStudent->getWaitTime();
+    while (curr != NULL) {
+      Student *compare = curr->data;
+      if (compare->getWaitTime() <= tempMin) { //not sure about this yet
+        tempMin = compare->getWaitTime();
+        minStudent = compare;
+      }
+      if (curr->next == NULL) {
+        break;
+      }
+      curr = curr->next;
+    }
+    waitTimes[index++] = tempMin;
+    m_totalStudentWait += tempMin;
+    if (tempMin > 10){
+      ++m_numStudentsOver10;
+    }
+    m_processed->remove(minStudent);
+  }
+
+
+
+  m_meanStudentWait = (float)(m_totalStudentWait / m_numStudents);
+  m_maxStudentWait = waitTimes[m_numStudents - 1];
+
+  //calculate median of student wait
+  int mid = 0;
+  //if even
+  if (m_numStudents % 2 == 0) {
+    mid = m_numStudents / 2;
+    m_medianStudentWait = (waitTimes[mid] + waitTimes[mid + 1]) / 2;
+  } else {
+    //if odd
+    mid = (m_numStudents / 2) + 1;
+    m_medianStudentWait = waitTimes[mid];
+  }
+
+  //calculate mean for window idle waitTimes
+  m_meanIdleTime = (float)m_totalIdleTime / m_numWindows;
 }
 
 void Simulate::printStats() {
-
+  cout << "Mean student wait time: " << m_meanStudentWait << endl;
+  cout << "Median student wait time: " << m_medianStudentWait << endl;
+  cout << "Longest student wait time: " << m_maxStudentWait << endl;
+  cout << "# of students waiting for more than 10 mins: " << m_numStudentsOver10 << endl;
+  cout << "Mean window idle time: " << m_meanIdleTime << endl;
+  cout << "Longest windoe idle time: " << m_maxIdleWait << endl;
+  cout << "# of windows idle for more than 5 mins: " << m_numWindowsOver5 << endl;
 }
