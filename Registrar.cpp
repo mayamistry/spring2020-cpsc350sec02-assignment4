@@ -12,6 +12,10 @@ Registrar::Registrar(int numWindows) {
   initializeRegistrar();
 }
 
+Registrar::~Registrar() {
+  delete m_windows;
+}
+
 void Registrar::initializeRegistrar() {
   m_windows = new Window *[m_numWindows];
   for (int i = 0; i < m_numWindows; ++i) {

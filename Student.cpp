@@ -11,7 +11,7 @@ Student::Student(int windowTime) {
 }
 
 Student::~Student() {
-  //no pointers so no need to delete????
+  //no pointers so no need to delete
 }
 
 //setter and getter methods

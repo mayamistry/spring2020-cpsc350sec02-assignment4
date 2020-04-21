@@ -1,6 +1,7 @@
 #include "Simulate.h"
 #include <fstream>
 
+//Class that reads in file and gets all necessary info to run simulation
 class FileIO {
   public:
     FileIO();
@@ -16,4 +17,5 @@ class FileIO {
   private:
     string m_fileName;
     ifstream inFS;
+    int *m_fileText;
 };

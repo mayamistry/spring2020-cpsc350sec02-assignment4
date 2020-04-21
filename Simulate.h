@@ -1,9 +1,7 @@
 #include "StudentQueue.h"
 #include "Registrar.h"
 
-//DOES THIS NEED TO BE A TEMPLATE??????
-
-
+//Class where the algorithm and all the objects get used to perform simulation
 class Simulate {
   public:
     Simulate();

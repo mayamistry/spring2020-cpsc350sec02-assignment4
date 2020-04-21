@@ -1,6 +1,7 @@
 #include <iostream>
 using namespace std;
 
+//Student object that holds window time and wait time in queue
 class Student {
   public:
     Student();

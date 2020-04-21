@@ -1,5 +1,6 @@
 #include "Student.h"
 
+//Class to hold the student in the window when in rgeistrar
 class Window {
   public:
     Window();

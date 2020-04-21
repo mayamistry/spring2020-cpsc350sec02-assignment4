@@ -46,7 +46,10 @@ Simulate::Simulate(int numWindows, Registrar *r, int *text, int numElements) {
 }
 
 Simulate::~Simulate() {
-  //DELETE ALL OF THE POINTERS THAT WE USE IN THIS FILE !!!!!!!!!!!!!!!!!
+  delete m_queue;
+  delete m_processed;
+  delete m_fileText;
+  delete m_registrar;
 }
 
 void Simulate::simulate() {
@@ -64,8 +67,6 @@ void Simulate::simulate() {
           if (curr->getCurrTime() == s->getWindowTime()) {
             //need to remove them from the window, but first check if student is in the queue
             m_processed->insertBack(s); //put student removed from registrar into the processed DLL to use for analysis purposes
-            cout << "WINDOW TIME: " << s->getWindowTime() << endl;
-            cout << "BACK OF M_PROCESSED QUEUE: " << m_processed->back->data->getWindowTime() << endl;
             //take out the old idle time and add to the statistics
             int idleTime = curr->getIdleTime();
             m_totalIdleTime += idleTime;
@@ -123,23 +124,17 @@ void Simulate::simulate() {
         ++stringIndex;
         int num = m_fileText[stringIndex]; //number of students being added at this clock tick
         ++stringIndex;
+        m_numStudents += num;
         for (int i = 0; i < num; ++i) {
           //add the node (or nodes) to the queue first before doing anything
-          Student *s = new Student(m_fileText[stringIndex++]);
-          ++m_numStudents;
+          Student *s = new Student(m_fileText[stringIndex]);
           m_queue->insert(s);
-          if (stringIndex == m_numElements) {
+          if (stringIndex == m_numElements - 1) {
             stringIndex = -1;
+            break;
           }
+          ++stringIndex;
         }
-
-        //IS THIS ERROR HERE????
-        // ListNode<Student> *curr = m_queue->front; //get front of the queue (pointer)
-        // while (curr != NULL) {
-        //   Student *student = curr->data;
-        //   cout << "Student in queue BEFORE: " << student->getWindowTime() << endl;
-        //   curr = curr->next;
-        // }
 
 
         //check if any of the windows are open first
@@ -156,27 +151,6 @@ void Simulate::simulate() {
         }
       }
     }
-    cout << "MAIN TIME: " << m_mainTime << endl;
-    cout << "STUDENT QUEUE SIZE: " << m_queue->getSize() << endl;
-    //What's in the queue?
-    ListNode<Student> *curr = m_queue->front; //get front of the queue (pointer)
-    Student *student = m_queue->peek(); //get front of the queue (Student)
-    while (curr != NULL) {
-      student = curr->data;
-      cout << "Student in queue: " << student->getWindowTime() << endl;
-      cout << "Student wait time: " << student->getWaitTime() << endl;
-      curr = curr->next;
-    }
-
-
-    //What's in the registrar?
-    for (int i = 0; i  < m_numWindows; ++i) {
-      Window *w = m_registrar->getCurrElement(i);
-      cout << "Window at registrar: " << w->getCurrTime() << endl;
-      cout << "Window idle time: " << w->getIdleTime() << endl;
-    }
-
-    cout << endl;
 
     //AFTER DOING EVERYTHING, then check if you should continue the simulation
     if (stringIndex == 0) {
@@ -205,7 +179,7 @@ void Simulate::simulate() {
   }
 }
 
-//NEED TO FIX THIS
+//checks if we can exit simulation or not
 bool Simulate::continueSimulation() {
   bool check = true;
   //check if the queue is empty and check if the registrar is empty
@@ -215,21 +189,12 @@ bool Simulate::continueSimulation() {
   return check;
 }
 
+//calculates stats after simulation is over
 void Simulate::calculateStats(){
-  //DO WE NEED TO DELETE THE STUDENT OBJECTS AT SOME POINT?
   //SORTING A NEW Queue
 
-  cout << "NUM STUDENTS: " << m_numStudents <<  endl;
 
-  ListNode<Student> *curr = m_processed->front;
-  while (curr != NULL) {
-    Student *s = curr->data;
-    cout << s->getWindowTime() << endl;
-    curr = curr->next;
-  }
-
-
-
+  //sort the wait times for the students and put ordered times into an array
   int* waitTimes = new int[m_numStudents];
   int index = 0;
   while (!m_processed->isEmpty()) {
@@ -238,7 +203,7 @@ void Simulate::calculateStats(){
     int tempMin = minStudent->getWaitTime();
     while (curr != NULL) {
       Student *compare = curr->data;
-      if (compare->getWaitTime() <= tempMin) { //not sure about this yet
+      if (compare->getWaitTime() <= tempMin) {
         tempMin = compare->getWaitTime();
         minStudent = compare;
       }
@@ -255,6 +220,7 @@ void Simulate::calculateStats(){
     m_processed->remove(minStudent);
   }
 
+  //calculate the mean and get the max wait time at the end of the array
   m_meanStudentWait = (float)(m_totalStudentWait / m_numStudents);
   m_maxStudentWait = waitTimes[m_numStudents - 1];
 
@@ -274,7 +240,9 @@ void Simulate::calculateStats(){
   m_meanIdleTime = (float)m_totalIdleTime / m_numWindows;
 }
 
+//print all the stats using the member variables
 void Simulate::printStats() {
+  cout << "STATS FROM REGISTRAR SIMULATION: " << endl;
   cout << "Mean student wait time: " << m_meanStudentWait << endl;
   cout << "Median student wait time: " << m_medianStudentWait << endl;
   cout << "Longest student wait time: " << m_maxStudentWait << endl;

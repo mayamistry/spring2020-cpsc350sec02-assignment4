@@ -4,7 +4,7 @@
 #include "List.h"
 #include "DoublyLL.h"
 
-//this is implementing the List interface
+//this is implementing the List interface and represents the line of students at registrar
 template <class T>
 class StudentQueue : public List<T> {
   public:
@@ -27,6 +27,7 @@ class StudentQueue : public List<T> {
 
 #endif //STUDENTQUEUE.H
 
+//Default constructor
 template <class T>
 StudentQueue<T>::StudentQueue() {
   m_size = 0;
@@ -35,6 +36,7 @@ StudentQueue<T>::StudentQueue() {
   rear = NULL;
 }
 
+//Destructor
 template <class T>
 StudentQueue<T>::~StudentQueue() {
   delete m_queue;
@@ -62,6 +64,7 @@ void StudentQueue<T>::insert(T* element) {
     node->next = NULL;
     node->prev = rear;
   }
+  rear = node;
   ++m_size;
   m_queue->insertBack(element);
 }

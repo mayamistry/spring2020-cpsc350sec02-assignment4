@@ -1,5 +1,6 @@
 #include "ListNode.h"
 
+//DoublyLL templated class to use for anything
 template <class T>
 class DoublyLL{
   public:

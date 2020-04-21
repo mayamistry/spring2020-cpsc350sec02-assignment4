@@ -1,6 +1,7 @@
 #include <iostream>
 using namespace std;
 
+//List node for DLL
 template <class T>
 class ListNode {
   public:
