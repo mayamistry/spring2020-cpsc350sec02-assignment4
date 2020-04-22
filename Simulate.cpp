@@ -192,8 +192,7 @@ bool Simulate::continueSimulation() {
 //calculates stats after simulation is over
 void Simulate::calculateStats(){
   //SORTING A NEW Queue
-
-
+  
   //sort the wait times for the students and put ordered times into an array
   int* waitTimes = new int[m_numStudents];
   int index = 0;
